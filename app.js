@@ -1,72 +1,106 @@
-// UI and LS objects
-ui = new UI();
-ls = new LS();
-
 // event elements
-// form submit
+const taskList = document.querySelector('ul');
 const form = document.querySelector('form');
 const taskInput = document.querySelector('#task');
-// tasklist X click event
-const taskList = document.querySelector('ul');
-taskList.addEventListener('click', deleteTask);
-// clear button event
+const delAllBtn = document.querySelector('#del-tasks');
 const clearBtn = document.querySelector('#clear-tasks');
-clearBtn.addEventListener('click', deleteTasks);
-// filter field input event
-const filterInput = document.querySelector('#filter')
-filterInput.addEventListener('keyup', filterTask);
+
 // page reload
 document.addEventListener('DOMContentLoaded', getTasks);
 
-// events
+
+taskList.addEventListener('click', deleteTask);
+
+delAllBtn.addEventListener('click', deleteTasks);
+
 // form submit event
 form.addEventListener('submit', addTask);
-
+// add task
 function addTask(e) {
-	// create a new object Task with input value
-	const task = new Task(taskInput.value);
-	// add task value to the visual UI object
-	ui.addTask(task);
-	// add task value to the LS by LS object
-	ls.addTask(task);
+	const li = document.createElement('li');
+	li.className = 'collection-item';
+	li.appendChild(document.createTextNode(taskInput.value));
+	
+	const link = document.createElement('a');
+	link.className = 'secondary-content';
+	link.appendChild(document.createTextNode('X'));
+	link.setAttribute('href', '#');
+	li.appendChild(link);
+
+	taskList.appendChild(li);
+
+	storeTaskInLocalStorage(taskInput.value);
+
+	taskInput.value = '';
+
 	e.preventDefault();
 }
-
+// delete task
 function deleteTask(e){
-	// get task name
-	let task = e.target.parentElement.firstChild;
-	// delete task value from visual by UI object
-	ui.deleteTask(task);
-	// change task element content before deleting from LS
-	task = task.textContent;
-	// delete task value from LS by LS object
-	ls.deleteTask(task);
+	console.log(e.target.parentElement);
+	if(e.target.textContent == "X"){
+		if(confirm('Do you want to delete this task?')) {
+			e.target.parentElement.remove();
+			removeTaskFromLocalStorage(e.target.parentElement.textContent);
+		}
+	}
 }
 
 function deleteTasks(e){
-	// delete all tasks from ui
-	let tasks = document.querySelector('ul');
-	ui.deleteTasks(tasks);
-	// delete tasks from LS
-	ls.deleteTasks();
-}
-
-function getTasks(e) {
-	// get tasks from LS by this localStorage name
-	tasks = ls.getData('tasks');
-	// create task list by UI
-	ui.getTasks(tasks);
-}
-
-function filterTask(e){
-	const text = e.target.value.toLowerCase();
-	const tasks = document.querySelectorAll('.collection-item');
-	tasks.forEach(function(element){
-		const task = element.firstChild.textContent.toLowerCase();
-		if(task.indexOf(text) != -1){
-			element.style.display = 'block';
-		} else {
-			element.style.display = 'none'
-		}
-	});
+	while(taskList.firstChild){
+		taskList.removeChild(taskList.firstChild);
 	}
+	localStorage.clear();
+}
+// store in ls
+function storeTaskInLocalStorage(task=null) {
+  let tasks;
+  if(localStorage.getItem('tasks') === null){
+    tasks = [];
+  } else {
+    tasks = JSON.parse(localStorage.getItem('tasks'));
+  }
+  console.log(tasks);
+  tasks.push(task);
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+// remove from ls
+function removeTaskFromLocalStorage(task) {
+  let tasks;
+  if(localStorage.getItem('tasks') === null){
+    tasks = [];
+  } else {
+    tasks = JSON.parse(localStorage.getItem('tasks'));
+  }
+  console.log(task);
+  tasks.forEach(function(element, index){
+  	console.log(element);
+  	if(element == task.slice(0, -1)){
+  		tasks.splice(index, 1);
+  	}
+  });
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+// get tasks
+function getTasks(e){
+  let tasks;
+  if(localStorage.getItem('tasks') === null){
+    tasks = [];
+  } else {
+    tasks = JSON.parse(localStorage.getItem('tasks'));
+  }
+  
+  tasks.forEach(function(task){
+  	const li = document.createElement('li');
+	li.className = 'collection-item';
+	li.appendChild(document.createTextNode(task));
+	
+	const link = document.createElement('a');
+	link.className = 'secondary-content';
+	link.appendChild(document.createTextNode('X'));
+	link.setAttribute('href', '#');
+	li.appendChild(link);
+
+	taskList.appendChild(li);
+  });
+}
